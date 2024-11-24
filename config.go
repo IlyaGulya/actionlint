@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/ilyagulya/yaml"
 )
 
 // Config is configuration of actionlint. This struct instance is parsed from "actionlint.yaml"

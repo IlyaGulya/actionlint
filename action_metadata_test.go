@@ -2,6 +2,7 @@ package actionlint
 
 import (
 	"bytes"
+	parser2 "github.com/goccy/go-yaml/parser"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"gopkg.in/yaml.v3"
+	"github.com/ilyagulya/yaml"
 )
 
 func testGetWantedActionMetadata() *ActionMetadata {
@@ -170,6 +171,11 @@ func TestLocalActionsFindMetadataOK(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestYaml(t *testing.T) {
+	file, _ := parser2.ParseFile(".github/workflows/codeql.yaml", 0)
+	println(file.Name)
 }
 
 func TestLocalActionsFindConcurrently(t *testing.T) {

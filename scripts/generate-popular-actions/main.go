@@ -16,8 +16,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ilyagulya/yaml"
 	"github.com/rhysd/actionlint"
-	"gopkg.in/yaml.v3"
 )
 
 type actionOutput struct {

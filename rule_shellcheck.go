@@ -24,6 +24,7 @@ type RuleShellcheck struct {
 	jobShell      string
 	runnerShell   string
 	mu            sync.Mutex
+	sourceMap     *SourceMap
 }
 
 func newRuleShellcheck(cmd *externalCommand) *RuleShellcheck {
@@ -42,12 +43,16 @@ func newRuleShellcheck(cmd *externalCommand) *RuleShellcheck {
 // NewRuleShellcheck creates new RuleShellcheck instance. The executable argument can be command
 // name or relative/absolute file path. When the given executable is not found in system, it returns
 // an error as 2nd return value.
-func NewRuleShellcheck(executable string, proc *concurrentProcess) (*RuleShellcheck, error) {
+func NewRuleShellcheck(executable string, proc *concurrentProcess, sourceMap *SourceMap) (*RuleShellcheck, error) {
 	cmd, err := proc.newCommandRunner(executable, false)
 	if err != nil {
 		return nil, err
 	}
-	return newRuleShellcheck(cmd), nil
+	return &RuleShellcheck{
+		RuleBase:  NewRuleBase("shellcheck", "Checks for shell script sources in \"run:\" using shellcheck"),
+		cmd:       cmd,
+		sourceMap: sourceMap,
+	}, nil
 }
 
 // VisitStep is callback when visiting Step node.
@@ -215,17 +220,25 @@ func (rule *RuleShellcheck) runShellcheck(src, shell string, pos *Pos) {
 		// Synchronize rule.Errorf calls
 		rule.mu.Lock()
 		defer rule.mu.Unlock()
-		// It's better to show source location in the script as position of error, but it's not
-		// possible easily. YAML has multiple block styles with '|', '>', '|+', '>+', '|-', '>-'. Some
-		// of them remove indentation and/or blank lines. So restoring source position in block string
-		// is not possible. Sourcemap is necessary to do it.
-		// Instead, actionlint shows position of 'run:' as position of error. And separately show
-		// location in script which is reported by shellcheck in error message.
+
+		var scriptIndex int
+		for i, script := range rule.sourceMap.Scripts {
+			if script.StartPos.Line == pos.Line && script.StartPos.Col == pos.Col {
+				scriptIndex = i
+				break
+			}
+		}
+
 		for _, err := range errs {
-			// Consider the first line is setup for running shell which was implicitly added for better check
-			line := err.Line - 1
-			msg := strings.TrimSuffix(err.Message, ".") // Trim period aligning style of error message
-			rule.Errorf(pos, "shellcheck reported issue in this script: SC%d:%s:%d:%d: %s", err.Code, err.Level, line, err.Column, msg)
+			origPos, translateErr := rule.sourceMap.TranslatePosition(scriptIndex, err.Line, err.Column)
+			if translateErr != nil {
+				rule.Debug("Failed to translate position: %v", translateErr)
+				origPos = *pos // Fallback to the original position
+			}
+
+			msg := strings.TrimSuffix(err.Message, ".")
+			rule.Errorf(&origPos, "shellcheck reported issue in script '%s': SC%d:%s:%d:%d: %s",
+				rule.sourceMap.Scripts[scriptIndex].Name, err.Code, err.Level, err.Line, err.Column, msg)
 		}
 
 		return nil

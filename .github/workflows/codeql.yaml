@@ -43,6 +43,14 @@ jobs:
         run: |
           set -x
           go build -v ./cmd/actionlint
+          while getopts "nf:" param
+          do
+            case "$param" in
+              f) file="$OPTARG" ;;
+              v) set -x ;;
+            esac
+          done
+  
           GOOS=js GOARCH=wasm go build -v -o ./playground/main.wasm ./playground
         if: ${{ matrix.language == 'go' }}
       - uses: github/codeql-action/analyze@v3

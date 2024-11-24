@@ -3,8 +3,8 @@
 package actionlint_fuzz
 
 import (
+	"github.com/ilyagulya/yaml"
 	"github.com/rhysd/actionlint"
-	"gopkg.in/yaml.v3"
 )
 
 func canParseByGoYAML(data []byte) (ret bool) {

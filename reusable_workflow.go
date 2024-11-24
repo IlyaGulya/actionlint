@@ -2,13 +2,12 @@ package actionlint
 
 import (
 	"fmt"
+	"github.com/ilyagulya/yaml"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
-
-	"gopkg.in/yaml.v3"
 )
 
 func expectedMapping(where string, n *yaml.Node) error {

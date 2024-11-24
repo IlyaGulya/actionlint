@@ -2,11 +2,10 @@ package actionlint
 
 import (
 	"fmt"
+	"github.com/ilyagulya/yaml"
 	"sort"
 	"strconv"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 // Pos represents position in the file.
@@ -39,7 +38,8 @@ type String struct {
 	// Quoted represents the string is quoted with ' or " in the YAML source.
 	Quoted bool
 	// Pos is a position of the string in source.
-	Pos *Pos
+	Pos    *Pos
+	EndPos *Pos
 }
 
 // ContainsExpression checks if the given string contains a ${{ }} placeholder or not. This function

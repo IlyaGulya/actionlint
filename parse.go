@@ -2,15 +2,14 @@ package actionlint
 
 import (
 	"fmt"
+	"github.com/ilyagulya/yaml"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
-// https://pkg.go.dev/gopkg.in/yaml.v3#Kind
+// https://pkg.go.dev/github.com/ilyagulya/yaml#Kind
 func nodeKindName(k yaml.Kind) string {
 	switch k {
 	case yaml.DocumentNode:
@@ -32,13 +31,17 @@ func posAt(n *yaml.Node) *Pos {
 	return &Pos{n.Line, n.Column}
 }
 
+func endPosAt(n *yaml.Node) *Pos {
+	return &Pos{n.EndLine, n.EndColumn}
+}
+
 func isNull(n *yaml.Node) bool {
 	return n.Kind == yaml.ScalarNode && n.Tag == "!!null"
 }
 
 func newString(n *yaml.Node) *String {
 	quoted := n.Style&(yaml.DoubleQuotedStyle|yaml.SingleQuotedStyle) != 0
-	return &String{n.Value, quoted, posAt(n)}
+	return &String{n.Value, quoted, posAt(n), endPosAt(n)}
 }
 
 type workflowKeyVal struct {
@@ -137,7 +140,7 @@ func (p *parser) mayParseExpression(n *yaml.Node) *String {
 
 func (p *parser) parseString(n *yaml.Node, allowEmpty bool) *String {
 	if !p.checkString(n, allowEmpty) {
-		return &String{"", false, posAt(n)}
+		return &String{"", false, posAt(n), endPosAt(n)}
 	}
 	return newString(n)
 }

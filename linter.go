@@ -536,7 +536,12 @@ func (l *Linter) check(
 			NewRuleIfCond(),
 		}
 		if l.shellcheck != "" {
-			r, err := NewRuleShellcheck(l.shellcheck, proc)
+			sourceMap, err := GenerateSourceMap(string(content))
+			if err != nil {
+				return nil, fmt.Errorf("failed to generate source map: %w", err)
+			}
+
+			r, err := NewRuleShellcheck(l.shellcheck, proc, sourceMap)
 			if err == nil {
 				rules = append(rules, r)
 			} else {
